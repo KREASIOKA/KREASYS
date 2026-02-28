@@ -65,9 +65,10 @@ select {
     border: 1px solid var(--bd);
     color: var(--txt);
     outline: none;
-    border-radius: 8px;
-    padding: 12px 14px;
-    font-size: 13px;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 14px;
+    line-height: 1.5;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     width: 100%;
     backdrop-filter: var(--glass-blur);
@@ -87,10 +88,10 @@ select:focus {
     -webkit-backdrop-filter: var(--glass-blur);
     color: var(--txt);
     border: 1px solid var(--bd);
-    padding: 10px 16px;
-    border-radius: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 13.5px;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     display: inline-flex;
     align-items: center;
@@ -177,18 +178,17 @@ nav::-webkit-scrollbar {
 }
 
 .nav-tab {
-    padding: 0 14px;
+    padding: 0 16px;
     height: 100%;
     display: flex;
     align-items: center;
     gap: 8px;
     color: var(--dim);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
+    font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
     border-bottom: 2px solid transparent;
-    letter-spacing: 1px;
+    letter-spacing: 0.3px;
     transition: all 0.3s ease;
 }
 
@@ -205,9 +205,9 @@ nav::-webkit-scrollbar {
 }
 
 .brand {
-    font-size: 16px;
-    font-weight: 800;
-    letter-spacing: 2px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
     background: linear-gradient(135deg, var(--ac), var(--ac2));
     background-clip: text;
     -webkit-background-clip: text;
@@ -277,11 +277,11 @@ nav::-webkit-scrollbar {
 }
 
 .c-head {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--txt);
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-weight: 700;
+    letter-spacing: 1px;
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -307,7 +307,7 @@ nav::-webkit-scrollbar {
 .msg {
     display: flex;
     gap: 16px;
-    font-size: 13.5px;
+    font-size: 14px;
     line-height: 1.6;
     animation: fi 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     opacity: 0;
@@ -326,13 +326,13 @@ nav::-webkit-scrollbar {
 }
 
 .msg-role {
-    font-size: 10px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 600;
     padding: 4px 10px;
-    border-radius: 6px;
+    border-radius: 8px;
     height: fit-content;
     margin-top: 2px;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     min-width: 80px;
     text-align: center;
     text-transform: uppercase;
@@ -422,13 +422,12 @@ nav::-webkit-scrollbar {
 }
 
 .chat-hdr {
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .chat-hdr.USR {

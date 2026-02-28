@@ -24,20 +24,45 @@ async function tstTg() {
 
 async function tgXc(msg, t) {
     st.ts++;
-    const q = `[TELEGRAM user ${msg.from.first_name}]: ${msg.text}`;
+
+    // Track known users in state Memory
+    if (!st.cfg.tgUsers) st.cfg.tgUsers = {};
+    st.cfg.tgUsers[msg.from.first_name] = msg.chat.id;
+    svGlb();
+
+    const knownUsers = Object.entries(st.cfg.tgUsers).map(([name, id]) => `- ${name}: ${id}`).join('\n');
+
+    const q = `[TELEGRAM message from ${msg.from.first_name} (Chat ID: ${msg.chat.id})]: ${msg.text}`;
     lg('USR', q);
     const m = await route(q);
-    const p = `${st.vfs['/system/personality.md']}\n\nSKILLS:\n${st.vfs['/system/skills.md']}\n\nMEMORY:\n${st.vfs['/system/memory.log']}\n\nVFS STATE:\n${buildVfsContext()}\n\nCRITICAL RULE: The user is messaging you on Telegram. Respond normally, directly answering the user, while wrapping any code/file changes in <file path="..."></file>. Do not include internal system logs in the response output. The final text outside of the <file> tags is what will be sent to the user's Telegram app. Keep chat text clean and human-like.`;
+    const p = `${st.vfs['/system/personality.md']}\n\nSKILLS:\n${st.vfs['/system/skills.md']}
+4. AUTONOMOUS MESSAGING: If you need to send a message to a specific Telegram user autonomously, use <tg_send chat_id="ID">Your message</tg_send>.
+Known Telegram Users:
+${knownUsers}
+
+\nMEMORY:\n${st.vfs['/system/memory.log']}\n\nVFS STATE:\n${buildVfsContext()}\n\nCRITICAL RULE: The user is messaging you on Telegram. Respond normally. You can use <tg_send> to message OTHERS, but any text outside of tags will go to the current user (${msg.from.first_name}).`;
 
     try {
         const r = await llm(p, q, m);
         lg('AGT', r);
         psVfs(r);
 
-        let cleanReply = r.replace(/<file[^>]*>[\s\S]*?<\/file>/g, '').trim();
-        if (!cleanReply) cleanReply = "✅ Request processed.";
+        // Process autonomous telegram dispatches
+        const tgRg = /<tg_send\s+chat_id=["']?([^"'>]+)["']?>([\s\S]*?)<\/tg_send>/gi;
+        let tm;
+        while ((tm = tgRg.exec(r)) !== null) {
+            const tgtId = tm[1];
+            const payload = tm[2].trim();
+            lg('SYS', `Autonomous Dispatch -> TG ID: ${tgtId}`);
+            fetch(`https://api.telegram.org/bot${t}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: tgtId, text: payload }) }).catch(e => lg('ERR', `TG Dispatch failed: ${e.message}`));
+        }
 
-        await fetch(`https://api.telegram.org/bot${t}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: msg.chat.id, text: cleanReply }) });
+        let cleanReply = r.replace(/<file[^>]*>[\s\S]*?<\/file>/g, '').replace(/<tg_send[^>]*>[\s\S]*?<\/tg_send>/g, '').trim();
+        if (!cleanReply && !r.includes('<tg_send')) cleanReply = "✅ Request processed.";
+
+        if (cleanReply) {
+            await fetch(`https://api.telegram.org/bot${t}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: msg.chat.id, text: cleanReply }) });
+        }
     } catch (e) {
         lg('ERR', `TG [${msg.from.first_name}]: ${e.message}`);
         await fetch(`https://api.telegram.org/bot${t}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: msg.chat.id, text: `Error: ${e.message}` }) });

@@ -43,13 +43,31 @@ async function xc(q, isC) {
     const m = await route(q);
     lg('SYS', `Router selected [${m.n}]`);
 
-    const p = `${st.vfs['/system/personality.md']}\n\nSKILLS:\n${st.vfs['/system/skills.md']}\n\nMEMORY:\n${st.vfs['/system/memory.log']}\n\nVFS STATE:\n${buildVfsContext()}`;
+    const knownUsers = (st.cfg.tgUsers ? Object.entries(st.cfg.tgUsers).map(([name, id]) => `- ${name}: ${id}`).join('\n') : "None");
+    const p = `${st.vfs['/system/personality.md']}\n\nSKILLS:\n${st.vfs['/system/skills.md']}
+4. AUTONOMOUS MESSAGING: If you need to send a message to a specific Telegram user autonomously, use <tg_send chat_id="ID">Your message</tg_send>.
+Known Telegram Users:
+${knownUsers}
+
+\nMEMORY:\n${st.vfs['/system/memory.log']}\n\nVFS STATE:\n${buildVfsContext()}`;
 
     try {
         const r = await llm(p, q, m);
         if (typeof psPlan === 'function') psPlan(r);
         lg('AGT', r);
-        if (isC) chLg('AGT', r.replace(/<file[^>]*>[\s\S]*?<\/file>/g, '*[VFS update occurred - Check IDE Workspace]*').replace(/<plan[^>]*>[\s\S]*?<\/plan>/gi, ''));
+
+        if (st.cfg.tg) {
+            const tgRg = /<tg_send\s+chat_id=["']?([^"'>]+)["']?>([\s\S]*?)<\/tg_send>/gi;
+            let tm;
+            while ((tm = tgRg.exec(r)) !== null) {
+                const tgtId = tm[1];
+                const payload = tm[2].trim();
+                lg('SYS', `Autonomous Dispatch -> TG ID: ${tgtId}`);
+                fetch(`https://api.telegram.org/bot${st.cfg.tg}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: tgtId, text: payload }) }).catch(e => lg('ERR', `TG Dispatch failed: ${e.message}`));
+            }
+        }
+
+        if (isC) chLg('AGT', r.replace(/<file[^>]*>[\s\S]*?<\/file>/g, '*[VFS update occurred - Check IDE Workspace]*').replace(/<plan[^>]*>[\s\S]*?<\/plan>/gi, '').replace(/<tg_send[^>]*>[\s\S]*?<\/tg_send>/gi, '*[Autonomous Telegram Message Dispatched]*'));
         psVfs(r);
     } catch (e) { lg('ERR', e.message); if (isC) chLg('AGT', `**Error:** ${e.message}`) }
 
