@@ -31,14 +31,14 @@ async function route(q) {
     } catch { return avail[0] }
 }
 
-async function xc(q, isC) {
-    if (!q.trim()) return;
+async function xc(q, isC, attachment) {
+    if (!q.trim() && !attachment) return;
     st.run = 1; st.ts++;
     const xn = isC ? '#c-in' : '#t-in';
     $(xn).value = ''; $(xn).style.height = '50px';
     $('#btn-run-c').style.display = 'none'; $('#btn-stop-c').style.display = '';
     lg('USR', q);
-    if (isC) chLg('USR', q);
+    if (isC) chLg('USR', q, attachment);
 
     const m = await route(q);
     lg('SYS', `Router selected [${m.n}]`);
@@ -46,13 +46,20 @@ async function xc(q, isC) {
     const knownUsers = (st.cfg.tgUsers ? Object.entries(st.cfg.tgUsers).map(([name, id]) => `- ${name}: ${id}`).join('\n') : "None");
     const p = `${st.vfs['/system/personality.md']}\n\nSKILLS:\n${st.vfs['/system/skills.md']}
 4. AUTONOMOUS MESSAGING: If you need to send a message to a specific Telegram user autonomously, use <tg_send chat_id="ID">Your message</tg_send>.
+5. RICH MEDIA RESPONSES: To respond with an image URL, use <media type="image" url="URL"/>. For audio: <media type="audio" url="URL"/>. For video: <media type="video" url="URL"/>.
 Known Telegram Users:
 ${knownUsers}
 
 \nMEMORY:\n${st.vfs['/system/memory.log']}\n\nVFS STATE:\n${buildVfsContext()}`;
 
+    // Attach file context if sent
+    let userMsg = q;
+    if (attachment) {
+        userMsg = `[USER ATTACHED FILE: "${attachment.name}" (${attachment.type}, ${(attachment.size / 1024).toFixed(1)}KB)]\n${attachment.isText ? 'File contents:\n' + attachment.content : '[Binary/Image file — treat as visual context for this query]'}\n\nUser message: ${q}`;
+    }
+
     try {
-        const r = await llm(p, q, m);
+        const r = await llm(p, userMsg, m);
         if (typeof psPlan === 'function') psPlan(r);
         lg('AGT', r);
 

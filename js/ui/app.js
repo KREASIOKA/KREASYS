@@ -11,15 +11,56 @@ async function boot() {
     ckDb();
 }
 
+let pendingAttachment = null;
+let deferredInstallPrompt = null;
+
 function bind() {
     $$('.nav-tab').forEach(t => t.onclick = () => { $$('.nav-tab').forEach(x => x.classList.remove('active')); $$('.panel').forEach(x => x.classList.remove('active')); t.classList.add('active'); $(`#${t.dataset.target}`).classList.add('active') });
     const h = function () { this.style.height = '50px'; this.style.height = Math.min(this.scrollHeight, 150) + 'px' };
     $('#c-in').oninput = h; $('#t-in').oninput = h;
-    const x = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!st.run) { if (e.target.id === 'c-in') xc($('#c-in').value, 1); else xc($('#t-in').value, 0) } } };
+    const x = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!st.run) { if (e.target.id === 'c-in') sendChat(); else xc($('#t-in').value, 0) } } };
     $('#c-in').onkeydown = x; $('#t-in').onkeydown = x;
-    $('#btn-run-c').onclick = () => xc($('#c-in').value, 1);
+    $('#btn-run-c').onclick = () => sendChat();
     $('#btn-run-t').onclick = () => xc($('#t-in').value, 0);
     $('#btn-stop-c').onclick = () => st.run = 0;
+    const attachBtn = $('#btn-attach');
+    if (attachBtn) attachBtn.onclick = () => $('#chat-file-in').click();
+    const fileIn = $('#chat-file-in');
+    if (fileIn) fileIn.onchange = e => handleAttach(e);
+    // PWA install prompt
+    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; const btn = $('#btn-install'); if (btn) btn.style.display = 'flex'; });
+    window.addEventListener('appinstalled', () => { const btn = $('#btn-install'); if (btn) btn.style.display = 'none'; deferredInstallPrompt = null; lg('SYS', 'KREASYS installed as PWA.'); });
+}
+
+function sendChat() {
+    const q = $('#c-in').value;
+    if (!q.trim() && !pendingAttachment) return;
+    xc(q, 1, pendingAttachment);
+    pendingAttachment = null;
+    const prev = $('#attach-preview');
+    if (prev) prev.remove();
+}
+
+function handleAttach(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const isText = file.type.startsWith('text/') || /\.(md|js|py|json|html|css|ts|jsx|txt|csv|xml|yaml|yml)$/i.test(file.name);
+    const isImage = file.type.startsWith('image/');
+    const reader = new FileReader();
+    reader.onload = ev => {
+        pendingAttachment = { name: file.name, type: file.type, size: file.size, isText, content: isText ? ev.target.result : null, dataUrl: isImage ? ev.target.result : null };
+        const existing = $('#attach-preview'); if (existing) existing.remove();
+        const chip = document.createElement('div');
+        chip.id = 'attach-preview';
+        chip.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(0,179,255,0.1);border:1px solid rgba(0,179,255,0.3);border-radius:8px;font-size:12px;color:var(--ac2);flex-shrink:0;';
+        if (isImage) { const thumb = document.createElement('img'); thumb.src = ev.target.result; thumb.style.cssText = 'width:42px;height:42px;border-radius:5px;object-fit:cover;flex-shrink:0;'; chip.appendChild(thumb); }
+        chip.innerHTML += `<i data-lucide="paperclip" style="width:13px;height:13px;flex-shrink:0"></i><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${file.name}</span><i data-lucide="x" style="width:13px;height:13px;cursor:pointer;color:var(--err);flex-shrink:0" onclick="pendingAttachment=null;document.getElementById('attach-preview').remove();document.getElementById('chat-file-in').value=''"></i>`;
+        const bar = $('#c-in').closest ? $('#c-in').parentElement.parentElement : null;
+        if (bar) bar.insertBefore(chip, bar.firstChild);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+    if (isText) reader.readAsText(file); else reader.readAsDataURL(file);
+    e.target.value = '';
 }
 
 function uiMod() {
@@ -157,11 +198,35 @@ function lg(r, c) {
         if (st.cfn.sys === '/system/memory.log') $('#vfs-ed-sys').value = m;
     }
 }
-function chLg(r, c) {
+function renderMedia(raw) {
+    // Render <media type="image|audio|video" url="..."/> tags from AI responses
+    return raw.replace(/<media\s+type=["'](image|audio|video)["']\s+url=["']([^"']+)["']\s*\/?>/gi, (_, type, url) => {
+        if (type === 'image') return `<img src="${url}" style="max-width:100%;border-radius:10px;margin-top:10px;box-shadow:0 4px 20px rgba(0,0,0,0.4)" loading="lazy" alt="AI Generated Image">`;
+        if (type === 'audio') return `<audio controls style="width:100%;margin-top:10px;border-radius:8px"><source src="${url}">Your browser does not support audio.</audio>`;
+        if (type === 'video') return `<video controls style="max-width:100%;border-radius:10px;margin-top:10px"><source src="${url}">Your browser does not support video.</video>`;
+        return '';
+    });
+}
+
+function chLg(r, c, attachment) {
     const w = $('#c-log'), e = document.createElement('div'); e.className = `chat-msg ${r}`;
     const hd = document.createElement('div'); hd.className = `chat-hdr ${r}`;
     hd.innerHTML = r === 'USR' ? '<i data-lucide="user"></i> You' : '<i data-lucide="bot"></i> KREASYS';
-    const bx = document.createElement('div'); bx.className = 'msg-ctx'; bx.innerHTML = (typeof marked !== 'undefined') ? marked.parse(c) : c;
+    const bx = document.createElement('div'); bx.className = 'msg-ctx';
+
+    // If user has an attachment, show a preview
+    if (r === 'USR' && attachment) {
+        if (attachment.dataUrl && attachment.type.startsWith('image/')) {
+            bx.innerHTML += `<img src="${attachment.dataUrl}" style="max-width:260px;border-radius:10px;margin-bottom:8px;display:block;box-shadow:0 4px 20px rgba(0,0,0,0.4)" alt="${attachment.name}">`;
+        } else {
+            bx.innerHTML += `<div style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(0,179,255,0.1);border:1px solid rgba(0,179,255,0.3);border-radius:6px;font-size:12px;color:var(--ac2);margin-bottom:8px"><i data-lucide="paperclip" style="width:12px;height:12px"></i>${attachment.name}</div>`;
+        }
+    }
+
+    // Render text with markdown and media tags
+    const cleaned = r === 'AGT' ? renderMedia(c) : c;
+    bx.innerHTML += (typeof marked !== 'undefined') ? marked.parse(cleaned) : cleaned;
+
     e.appendChild(hd); e.appendChild(bx); w.appendChild(e); w.scrollTop = w.scrollHeight;
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
