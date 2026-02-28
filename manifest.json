@@ -1,0 +1,26 @@
+{
+  "name": "KREASYS - Autonomous AI IDE",
+  "short_name": "KREASYS",
+  "description": "100% browser-native autonomous AI IDE with VFS, multi-modal routing, and Telegram integration.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030308",
+  "theme_color": "#030308",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "developer", "utilities"],
+  "screenshots": []
+}

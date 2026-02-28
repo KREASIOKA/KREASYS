@@ -15,6 +15,9 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#030308">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
@@ -31,6 +34,9 @@
         <div class="nav-tab" data-target="p-mod"><i data-lucide="cpu"></i> Models</div>
         <div class="nav-tab" data-target="p-term"><i data-lucide="activity"></i> SysLog</div>
         <div class="nav-tab" data-target="p-cfg"><i data-lucide="webhook"></i> Integrations</div>
+        <button class="btn primary" id="btn-install" onclick="deferredInstallPrompt&&deferredInstallPrompt.prompt()"
+            style="display:none;padding:6px 14px;font-size:12px;height:32px;border-radius:8px"><i
+                data-lucide="download"></i> Install App</button>
         <div style="flex:1"></div>
         <div class="stat-pill"><span class="dot dim" id="st-tg"></span> TG</div>
         <div class="stat-pill"><span class="dot dim" id="st-db"></span> DB</div>
@@ -43,10 +49,15 @@
             <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;padding:20px;gap:16px" id="c-log">
             </div>
             <div
-                style="padding:20px;display:flex;justify-content:center;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-top:1px solid rgba(255,255,255,0.05);box-shadow:0 -10px 40px rgba(0,0,0,0.2);position:relative;z-index:10;">
-                <div style="max-width:850px;width:100%;display:flex;gap:12px;align-items:flex-end">
+                style="padding:20px;display:flex;flex-direction:column;justify-content:center;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-top:1px solid rgba(255,255,255,0.05);box-shadow:0 -10px 40px rgba(0,0,0,0.2);position:relative;z-index:10;">
+                <input type="file" id="chat-file-in" style="display:none"
+                    accept="image/*,text/*,.md,.js,.py,.json,.html,.css,.ts,.jsx,.csv,.xml,.yaml,.yml">
+                <div style="max-width:850px;width:100%;margin:0 auto;display:flex;gap:12px;align-items:flex-end">
+                    <button class="btn" id="btn-attach"
+                        style="height:50px;width:50px;flex-shrink:0;padding:0;border-radius:12px;"
+                        title="Attach file"><i data-lucide="paperclip"></i></button>
                     <textarea id="c-in" rows="1"
-                        placeholder="Chat with KREASYS... It modifies files directly in the VFS."
+                        placeholder="Chat with KREASYS... Attach files or ask for images, audio, code!"
                         style="font-size:14px;padding:14px 16px;border-radius:12px;box-shadow:inset 0 2px 5px rgba(0,0,0,0.2)"></textarea>
                     <button class="btn primary" id="btn-run-c"
                         style="height:50px;width:56px;flex-shrink:0;padding:0;border-radius:12px;"><i
@@ -236,6 +247,7 @@
     <script src="js/core/ai.js" defer></script>
     <script src="js/core/telegram.js" defer></script>
     <script src="js/ui/app.js" defer></script>
+    <script src="js/global.js" defer></script>
 </body>
 
 </html>
