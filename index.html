@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+    <title>KREASYS | Autonomous Multi-IDE</title>
+    <meta name="description"
+        content="100% browser-native 24/7 autonomous bot with VFS IDE, Self-Modifying Memory, and Webhooks." />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: { colors: { ks: { bg: '#050510', bglit: '#0b0b1a', bd: '#1a1a3a', ac: '#00ffcc', ac2: '#00b3ff', txt: '#e0e0f0', dim: '#6a6a8a', err: '#ff4a4a', ok: '#39ff14', war: '#ffcc00' } } } } }</script>
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+    <input type="file" id="up-sys" style="display:none" onchange="upFile(event,'sys')">
+    <input type="file" id="up-wrk" style="display:none" onchange="upFile(event,'wrk')">
+
+    <nav>
+        <div class="brand">KREASYS</div>
+        <div class="nav-tab active" data-target="p-chat"><i data-lucide="message-square"></i> Chat</div>
+        <div class="nav-tab" data-target="p-ide"><i data-lucide="code-2"></i> Workspace</div>
+        <div class="nav-tab" data-target="p-id"><i data-lucide="brain-circuit"></i> Core Data</div>
+        <div class="nav-tab" data-target="p-mod"><i data-lucide="cpu"></i> Models</div>
+        <div class="nav-tab" data-target="p-term"><i data-lucide="activity"></i> SysLog</div>
+        <div class="nav-tab" data-target="p-cfg"><i data-lucide="webhook"></i> Integrations</div>
+        <div style="flex:1"></div>
+        <div class="stat-pill"><span class="dot dim" id="st-tg"></span> TG</div>
+        <div class="stat-pill"><span class="dot dim" id="st-db"></span> DB</div>
+        <div class="stat-pill" style="display:none" id="st-ram-w"><span id="st-ram">0MB</span></div>
+    </nav>
+
+    <div class="main-area">
+
+        <div id="p-chat" class="panel active" style="padding:0;background:transparent;">
+            <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;padding:20px;gap:16px" id="c-log">
+            </div>
+            <div
+                style="padding:20px;display:flex;justify-content:center;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-top:1px solid rgba(255,255,255,0.05);box-shadow:0 -10px 40px rgba(0,0,0,0.2);position:relative;z-index:10;">
+                <div style="max-width:850px;width:100%;display:flex;gap:12px;align-items:flex-end">
+                    <textarea id="c-in" rows="1"
+                        placeholder="Chat with KREASYS... It modifies files directly in the VFS."
+                        style="font-size:14px;padding:14px 16px;border-radius:12px;box-shadow:inset 0 2px 5px rgba(0,0,0,0.2)"></textarea>
+                    <button class="btn primary" id="btn-run-c"
+                        style="height:50px;width:56px;flex-shrink:0;padding:0;border-radius:12px;"><i
+                            data-lucide="send"></i></button>
+                    <button class="btn err" id="btn-stop-c"
+                        style="display:none;height:50px;width:56px;flex-shrink:0;padding:0;border-radius:12px;"><i
+                            data-lucide="square"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="p-ide" class="panel" style="overflow:hidden;padding:0;background:transparent;">
+            <div class="vfs-grid" style="width:100%">
+                <div
+                    style="height:100%;overflow-y:auto;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid rgba(255,255,255,0.05);border-radius:12px;display:flex;flex-direction:column;box-shadow:var(--shadow)">
+                    <div
+                        style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between">
+                        <div
+                            style="font-size:12px;font-weight:700;color:var(--txt);letter-spacing:1px;text-transform:uppercase;">
+                            <i data-lucide="folder-tree"
+                                style="width:14px;display:inline-block;margin-right:6px;color:var(--ac)"></i>
+                            /workspace/
+                        </div>
+                    </div>
+                    <div id="vfs-tree-wrk"
+                        style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:4px;font-size:12px">
+                    </div>
+                    <div
+                        style="padding:16px;border-top:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;gap:10px">
+                        <div style="display:flex;gap:10px">
+                            <button class="btn" style="flex:1;padding:10px" onclick="nwFile('wrk')"><i
+                                    data-lucide="file-plus"></i></button>
+                            <button class="btn" style="flex:1;padding:10px" onclick="$('#up-wrk').click()"><i
+                                    data-lucide="upload"></i></button>
+                        </div>
+                        <button class="btn primary" onclick="dlZip('wrk')"><i data-lucide="file-archive"></i> Export
+                            ZIP</button>
+                        <button class="btn err" onclick="wipeWrk()"><i data-lucide="flame"></i> Format Drive</button>
+                    </div>
+                </div>
+                <div
+                    style="height:100%;display:flex;flex-direction:column;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid rgba(255,255,255,0.05);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+                    <div
+                        style="padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:12px;background:rgba(0,0,0,0.2)">
+                        <i data-lucide="file-code" style="color:var(--ac);width:16px"></i>
+                        <span id="vfs-fn-wrk" style="font-size:13px;font-weight:600;color:var(--txt)">No File
+                            Selected</span>
+                        <div style="flex:1"></div>
+                        <button class="btn okc" style="padding:8px 14px;font-size:11.5px" onclick="ideSave('wrk')"><i
+                                data-lucide="save"></i> Save File</button>
+                    </div>
+                    <textarea id="vfs-ed-wrk"
+                        style="flex:1;resize:none;font-size:13px;font-family:var(--font-mono);line-height:1.6;padding:20px;border:none;border-radius:0;background:transparent;backdrop-filter:none;"
+                        spellcheck="false" placeholder="Select a workspace project file or upload one..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="p-id" class="panel" style="overflow:hidden;padding:0;background:transparent;">
+            <div class="vfs-grid" style="width:100%">
+                <div
+                    style="height:100%;overflow-y:auto;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid rgba(255,255,255,0.05);border-radius:12px;display:flex;flex-direction:column;box-shadow:var(--shadow)">
+                    <div
+                        style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between">
+                        <div
+                            style="font-size:12px;font-weight:700;color:var(--txt);letter-spacing:1px;text-transform:uppercase;">
+                            <i data-lucide="brain-circuit"
+                                style="width:14px;display:inline-block;margin-right:6px;color:var(--ac)"></i> /system/
+                        </div>
+                    </div>
+                    <div id="vfs-tree-sys"
+                        style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:4px;font-size:12px">
+                    </div>
+                    <div
+                        style="padding:16px;border-top:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;gap:10px">
+                        <div style="display:flex;gap:10px">
+                            <button class="btn" style="flex:1;padding:10px" onclick="nwFile('sys')"><i
+                                    data-lucide="file-plus"></i></button>
+                            <button class="btn" style="flex:1;padding:10px" onclick="$('#up-sys').click()"><i
+                                    data-lucide="upload"></i></button>
+                        </div>
+                        <button class="btn primary" onclick="dlZip('sys')"><i data-lucide="file-archive"></i> Backup
+                            Core</button>
+                    </div>
+                </div>
+                <div
+                    style="height:100%;display:flex;flex-direction:column;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid rgba(255,255,255,0.05);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+                    <div
+                        style="padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:12px;background:rgba(0,0,0,0.2)">
+                        <i data-lucide="fingerprint" style="color:var(--ac);width:16px"></i>
+                        <span id="vfs-fn-sys" style="font-size:13px;font-weight:600;color:var(--txt)">No File
+                            Selected</span>
+                        <div style="flex:1"></div>
+                        <button class="btn okc" style="padding:8px 14px;font-size:11.5px" onclick="ideSave('sys')"><i
+                                data-lucide="save"></i> Save File</button>
+                    </div>
+                    <textarea id="vfs-ed-sys"
+                        style="flex:1;resize:none;font-size:13px;font-family:var(--font-mono);line-height:1.6;padding:20px;border:none;border-radius:0;background:transparent;backdrop-filter:none;"
+                        spellcheck="false"
+                        placeholder="Select a core identity file... These files are immune to workspace formatting."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="p-mod" class="panel">
+            <div style="max-width:1200px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:15px">
+                <div class="card">
+                    <div class="c-head"><i data-lucide="network"></i> The Multi-Model Router</div>
+                    <p style="font-size:12px;color:var(--dim);margin-bottom:10px">Configure your model matrix. The
+                        internal Router will dynamically select the best active model per task. The first model is the
+                        fallback.</p>
+                    <div id="mod-list" style="display:flex;flex-direction:column;gap:12px"></div>
+                    <button class="btn" style="margin-top:10px;align-self:flex-start" onclick="addModUI()"><i
+                            data-lucide="plus"></i> Add New Model</button>
+                </div>
+                <div class="card">
+                    <div class="c-head"><i data-lucide="settings-2"></i> Inference Params</div>
+                    <div class="cfg-row"><span>Temperature</span><input type="range" id="c-tmp" min="0" max="2"
+                            step="0.1" oninput="this.nextElementSibling.innerText=this.value;svGlb()"><span
+                            style="color:var(--ac);font-weight:700"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="p-term" class="panel" style="padding:0;background:transparent;">
+            <div
+                style="padding:16px 24px;display:flex;gap:24px;background:rgba(5,5,10,0.8);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;z-index:10;box-shadow:0 4px 15px rgba(0,0,0,0.3)">
+                <div style="font-size:12px;color:var(--dim);letter-spacing:1px;"><span
+                        style="color:var(--txt);font-weight:700" id="m-up">0s</span> UPTIME</div>
+                <div style="font-size:12px;color:var(--dim);letter-spacing:1px;"><span
+                        style="color:var(--ac);font-weight:700" id="m-tk">0</span> TOKENS</div>
+                <div style="font-size:12px;color:var(--dim);letter-spacing:1px;"><span
+                        style="color:var(--ac2);font-weight:700" id="m-ts">0</span> TASKS</div>
+                <div style="flex:1"></div>
+                <button class="btn err" style="padding:6px 12px;font-size:11px" onclick="clearTerm()"><i
+                        data-lucide="trash"></i> Clear Log</button>
+            </div>
+            <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;padding:20px">
+                <div class="log-wrap" id="t-log"></div>
+            </div>
+            <div
+                style="border-top:1px solid rgba(255,255,255,0.05);background:var(--glass-bg);backdrop-filter:var(--glass-blur);padding:20px;display:flex;gap:12px;align-items:flex-end">
+                <textarea id="t-in" rows="1" placeholder="Issue a superuser sys-command... (Use /workspace/ paths)"
+                    style="font-size:14px;padding:14px 16px;border-radius:10px"></textarea>
+                <button class="btn primary" id="btn-run-t"
+                    style="height:52px;width:56px;flex-shrink:0;padding:0;border-radius:10px"><i
+                        data-lucide="terminal-square"></i></button>
+            </div>
+        </div>
+
+        <div id="p-cfg" class="panel">
+            <div style="max-width:800px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:15px">
+                <div class="card">
+                    <div class="c-head"><i data-lucide="send"></i> Telegram Webhooks</div>
+                    <p style="font-size:12px;color:var(--dim);margin-bottom:10px">Due to CORS limits in pure browsers,
+                        Discord is unsupported natively. Telegram works flawlessly. Enter your BotFather token below.
+                    </p>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap">
+                        <input type="password" id="c-tg" placeholder="Bot Token" style="flex:1;min-width:200px"
+                            oninput="svGlb()">
+                        <button class="btn okc" id="btn-tst-tg" onclick="tstTg()"><i data-lucide="plug"></i> Test
+                            Connection</button>
+                    </div>
+                    <div
+                        style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);padding:16px;border-radius:6px;border:1px solid var(--bd);margin-top:15px">
+                        <div>
+                            <div style="font-weight:700;font-size:14px;color:var(--txt)">24/7 Autonomous Polling</div>
+                            <div style="font-size:11px;color:var(--dim)">If ON, tasks execute from Telegram endlessy.
+                            </div>
+                        </div>
+                        <label class="switch tg-sw"><input type="checkbox" id="c-auto" onchange="tgTog()"><span
+                                class="slider"></span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+    <script src="js/core/state.js" defer></script>
+    <script src="js/core/vfs.js" defer></script>
+    <script src="js/core/ai.js" defer></script>
+    <script src="js/core/telegram.js" defer></script>
+    <script src="js/ui/app.js" defer></script>
+</body>
+
+</html>
