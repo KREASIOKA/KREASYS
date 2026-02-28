@@ -1,102 +1,102 @@
-<!-- Banner -->
-<p align="center">
-  <img src="https://www.kreasioka.com/img/kreasioka-banner.jpg" alt="KREASYS Banner">
-</p>
-
-<!-- Logo & Title -->
-<h1 align="center">
-  <img src="https://www.kreasioka.com/img/logo.svg" alt="Logo" width="40" height="40">
-  KREASYS | Autonomous Browser-Native IDE
-</h1>
-
-<p align="center">
-  <strong>100% Client-Side, Multi-Model, Fully Autonomous Artificial Intelligence</strong>
-</p>
-
-<!-- Badges -->
-<p align="center">
-  <a href="https://github.com/kreasioka/kreasiokai/stargazers"><img src="https://img.shields.io/github/stars/kreasioka/kreasiokai?style=for-the-badge&color=00ffcc&logo=github&logoColor=white" alt="Stars"></a>
-  <a href="https://github.com/kreasioka/kreasiokai/graphs/contributors"><img src="https://img.shields.io/github/contributors/kreasioka/kreasiokai?style=for-the-badge&color=00b3ff" alt="Contributors"></a>
-  <a href="https://www.kreasioka.com"><img src="https://img.shields.io/badge/Made_by-KREASIOKA_Team-050510?style=for-the-badge&logo=codeforces&logoColor=00ffcc" alt="KREASIOKA"></a>
-</p>
-
----
-
-## ⚠️ Early Development Notice
-> **Note to the Community:** 
-> We sincerely apologize for the initial lack of documentation! **KREASYS is currently in its very early alpha stages of development.** Features are still minimal, the codebase is rapidly evolving, and you will likely encounter bugs. We are actively working on stabilization, but contributions and feedback are deeply appreciated as we build the future of browser-native AI!
+<div align="center">
+  <img src="https://www.kreasioka.com/img/kreasioka-banner.jpg" alt="KREASYS Banner" width="100%">
+  
+  <br/>
+  <h1>
+    <img src="https://www.kreasioka.com/img/logo.svg" alt="KREASYS Logo" width="36" align="top"> 
+    KREASYS
+  </h1>
+  <p><strong>Autonomous Browser-Native IDE & Multi-Modal Artificial Intelligence</strong></p>
+  
+  <p>
+    <a href="https://github.com/KREASIOKA/KREASYS/stargazers">
+      <img src="https://img.shields.io/github/stars/KREASIOKA/KREASYS?style=for-the-badge&color=00ffcc" alt="GitHub Stars">
+    </a>
+    <a href="https://github.com/KREASIOKA/KREASYS/graphs/contributors">
+      <img src="https://img.shields.io/github/contributors/KREASIOKA/KREASYS?style=for-the-badge&color=00b3ff" alt="GitHub Contributors">
+    </a>
+    <a href="https://www.kreasioka.com">
+      <img src="https://img.shields.io/badge/Developed_by-KREASIOKA-050510?style=for-the-badge&color=050510" alt="Developed by KREASIOKA">
+    </a>
+  </p>
+</div>
 
 ---
 
-## 📖 Table of Contents
-- [What is KREASYS?](#-what-is-kreasys)
-- [Core Features](#-core-features)
-- [Architecture & Components](#-architecture--components)
-- [How It Works](#-how-it-works)
-- [Getting Started](#-getting-started)
-- [Contributors](#-contributors)
+> **Notice: Early Stage Development**
+> 
+> We sincerely apologize for the current lack of extensive documentation. KREASYS is strictly in its **early alpha stage of development**. Core features are currently minimal, the codebase is subject to rapid architectural variations, and there are known bugs that have yet to be resolved. We deeply appreciate your patience and community contributions as we work to stabilize the platform.
 
 ---
 
-## 🤖 What is KREASYS?
-Developed by the [KREASIOKA Team](https://www.kreasioka.com), **KREASYS** is a hyper-advanced, 100% browser-native AI agent and IDE. Running entirely in your local browser sandbox without requiring a backend server, KREASYS combines real-time AI memory, virtual file systems (VFS), and multi-modal autonomous routing (Text, Vision, Audio) to act as your tireless 24/7 personal software engineer. KREASYS possesses true autonomy, capable of modifying its own files and proactively dispatching Telegram messages to other users.
+## Table of Contents
+- [About KREASYS](#about-kreasys)
+- [Core Features](#core-features)
+- [Architecture & Components](#architecture--components)
+- [How It Works](#how-it-works)
+- [Getting Started](#getting-started)
+- [Community & Contributors](#community--contributors)
 
 ---
 
-## ✨ Core Features
-*   **Zero-Backend Architecture:** Everything from state management to LLM API handshakes happens in pure HTML/JS/CSS client-side.
-*   **Virtual File System (VFS):** Fully sandboxed, hierarchical file explorer mapped directly into your browser's IndexedDB. 
-*   **Multi-Modal Auto-Router:** Select from `Text`, `Multimodal`, `Vision`, `ImageGen`, and `Audio`. KREASYS analyzes your goals and automatically funnels tasks to your dedicated APIs.
-*   **Live Task Flowcharts:** Watch the AI plan its next move. KREASYS dynamically builds glowing neon flowcharts rendered directly in the SysLog terminal as it thinks.
-*   **Autonomous Telegram Surrogate:** Bind a Telegram bot token to grant the AI the ability to receive commands outside the browser, and autonomously route background messages to specific users via XML directive routing (`<tg_send>`).
+## About KREASYS
 
----
+Developed by the [KREASIOKA Team](https://www.kreasioka.com), **KREASYS** is a 100% browser-native AI agent and Integrated Development Environment (IDE). 
 
-## 🧩 Architecture & Components
-KREASYS V2 is structured into modular JavaScript injection layers for performance and scale:
+By eliminating the need for a dedicated backend server node, KREASYS successfully leverages your local browser sandbox, an IndexedDB-backed Virtual File System (VFS), and API-driven Multi-Modal LLM routing to function as a fully autonomous personal software assistant. It is capable of iteratively writing and modifying code, tracking its own execution paths visually, and autonomously dispatching external communications to platforms such as Telegram.
 
-*   `/css/styles.css` - Apple-inspired, minimalist liquid-glass UI/UX.
-*   `/js/core/state.js` - `localForage` persistence layers, sandboxing policies, and AI persona matrices.
-*   `/js/core/vfs.js` - Recursive file tree parsing algorithms and real-time Actionable Toast Notifications.
-*   `/js/core/ai.js` - Dynamic LLM inference workflows, OpenRouter integrations, and intent routing mechanics.
-*   `/js/core/telegram.js` - Webhook-free, long-polling Telegram logic that grants the AI parallel task handling.
-*   `/js/ui/app.js` - DOM manipulation, tab navigation, rendering engines, and animated flowchart handlers.
+## Core Features
 
----
+* **Zero-Backend Execution:** The entire engine runs strictly client-side via JavaScript modules, fetching LLM inference directly from external endpoints.
+* **Advanced Virtual File System (VFS):** A deeply integrated, hierarchical file explorer mapped directly to your browser's persistent storage.
+* **Multi-Modal Auto-Router:** Native capability differentiation. The system parses user intent to route distinct workloads to specialized models (Text, Multimodal, Vision, ImageGen, Audio, Video).
+* **Live Task Visualization:** Real-time generation of execution plans displayed as animated flowcharts within the system terminal UI.
+* **Autonomous Agent Delegation:** Webhook-free, background polling for Telegram bots. KREASYS can autonomously dispatch asynchronous messages dynamically using internal XML routing directives.
 
-## ⚙️ How It Works
-Because KREASYS operates strictly within the DOM envelope, it leverages secure `fetch` protocols to bridge client data to LLM APIs (like OpenRouter, Groq, or Custom Enpoints). 
+## Architecture & Components
 
-1. **Context Building:** Before sending your prompt, KREASYS dynamically iterates over your entire `/workspace/` and reads its own `memory.log` to construct highly personalized context.
-2. **Action Dispatching:** The AI yields XML directives payload strings (like `<file path="/workspace/app.js">code</file>` or `<tg_send chat_id="123">msg</tg_send>`), allowing it to execute real-world tasks structurally.
-3. **Execution:** The frontend's recursive parsers intersect these tags, silently writing them to the VFS or POSTing external HTTP webhooks securely, popping up UI notifications in real-time.
+KREASYS operates on a modular frontend architecture to ensure rapid scale and parallel performance:
 
----
+*   `css/styles.css` — The UI presentation layer featuring minimalist "liquid glass" UI/UX styling and dark-mode heuristics.
+*   `js/core/state.js` — Global state management, persistent VFS serialization layers, and AI prompt matrix bounds.
+*   `js/core/vfs.js` — Recursive file tree parsing, sandboxing adherence protocols, and Action Router notification event dispatchers.
+*   `js/core/ai.js` — The multi-model inference pipeline, custom routing mechanisms, and directive response parsing.
+*   `js/core/telegram.js` — Long-polling communication loops and autonomous UI dispatch protocols for human-agent interaction.
+*   `js/ui/app.js` — DOM rendering engines, state-to-view adapters, dynamic tab navigation, and interactive component rendering.
 
-## 🚀 Getting Started
-Since there is no complex backend daemon to install, spinning up KREASYS is practically instantaneous.
+## How It Works
+
+1. **Context Assembly:** Upon receiving a user prompt, KREASYS audits environmental states, memory logs, and VFS file trees to construct a cohesive system context payload.
+2. **Execution & Directives:** KREASYS infers intent using the selected LLM endpoint. It responds systematically using structured XML tags (e.g., `<file path="...">` or `<tg_send chat_id="...">`).
+3. **DOM & Action Mapping:** The frontend intercepts these operational tags. It sequentially modifies the virtual environment, triggers notification UI toasts, or transmits external network requests based on the AI's autonomous determination.
+
+## Getting Started
+
+Because KREASYS requires no complex backend environments, deployment on your local machine is nearly instantaneous.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/kreasioka/kreasiokai.git
+git clone https://github.com/KREASIOKA/KREASYS.git
 
-# 2. Enter the directory
-cd kreasiokai
+# 2. Navigate to the project directory
+cd KREASYS
 
-# 3. Start a local HTTP server to bypass strict origin CORS
+# 3. Serve the directory to bypass browser CORS restrictions
 python3 -m http.server 8080
 ```
-Then navigate to `http://localhost:8080` in your web browser. Supply an API key in the **Models** tab, and start building!
+Access the application by pointing your browser to `http://localhost:8080`. Bind your API access keys within the **Models** graphical tab to initialize the autonomous engine.
 
 ---
 
-## 🤝 Contributors
-We welcome pull requests! Check out our open issues to see where you can help.
+## Community & Contributors
 
-<a href="https://github.com/kreasioka/kreasiokai/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=kreasioka/kreasiokai" alt="Contributors Widget" />
-</a>
+We warmly welcome pull requests and issue submissions to accelerate the rapid development of KREASYS! 
 
-<p align="center">
-  <i>Developed with ❤️ by the <a href="https://www.kreasioka.com">KREASIOKA Team</a></i>
-</p>
+<div align="center">
+  <a href="https://github.com/KREASIOKA/KREASYS/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=KREASIOKA/KREASYS" alt="Contributors Widget" />
+  </a>
+  
+  <br/><br/>
+  <i>Built, designed, and maintained by the <a href="https://www.kreasioka.com">KREASIOKA Team</a>.</i>
+</div>
