@@ -34,7 +34,7 @@
         <div class="nav-tab" data-target="p-mod"><i data-lucide="network"></i> Models</div>
         <div class="nav-tab" data-target="p-wllm"><i data-lucide="cpu"></i> Local AI</div>
         <div class="nav-tab" data-target="p-term"><i data-lucide="activity"></i> SysLog</div>
-        <div class="nav-tab" data-target="p-cfg"><i data-lucide="webhook"></i> Integrations</div>
+        <div class="nav-tab" data-target="p-cfg"><i data-lucide="share-2"></i> Channeling</div>
         <button class="btn primary" id="btn-install" onclick="deferredInstallPrompt&&deferredInstallPrompt.prompt()"
             style="display:none;padding:6px 14px;font-size:12px;height:32px;border-radius:8px"><i
                 data-lucide="download"></i> Install App</button>
@@ -274,41 +274,87 @@
         </div>
 
         <div id="p-cfg" class="panel">
-            <div style="max-width:800px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:15px">
-                <div class="card">
-                    <div class="c-head"><i data-lucide="send"></i> Telegram Webhooks</div>
-                    <p style="font-size:13px;color:var(--dim);line-height:1.5;margin-bottom:10px">Enter your BotFather
-                        token below. The AI will auto-register every user who messages the bot and can dispatch messages
-                        cross-user autonomously.</p>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap">
-                        <input type="password" id="c-tg" placeholder="Bot Token" style="flex:1;min-width:200px"
+            <div style="max-width:900px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:20px">
+
+                <!-- Telegram Channel -->
+                <div class="card" style="border-left: 4px solid var(--ac2)">
+                    <div class="c-head" style="display:flex;align-items:center;justify-content:space-between">
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <i data-lucide="send" style="color:var(--ac2)"></i>
+                            Telegram Channel
+                        </div>
+                        <span
+                            style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(0,179,255,0.15);color:var(--ac2);border:1px solid rgba(0,179,255,0.3);font-weight:700">ACTIVE</span>
+                    </div>
+                    <p style="font-size:13px;color:var(--dim);line-height:1.5;margin-bottom:15px">
+                        Connect your AI to Telegram. The agent will auto-register users and can dispatch messages
+                        cross-user autonomously.
+                    </p>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px">
+                        <input type="password" id="c-tg" placeholder="BotFather Token" style="flex:1;min-width:250px"
                             oninput="svGlb()">
                         <button class="btn okc" id="btn-tst-tg" onclick="tstTg()"><i data-lucide="plug"></i> Test
                             Connection</button>
                     </div>
                     <div
-                        style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);padding:16px;border-radius:6px;border:1px solid var(--bd);margin-top:15px">
+                        style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);padding:16px;border-radius:10px;border:1px solid var(--bd)">
                         <div>
                             <div style="font-weight:600;font-size:15px;color:var(--txt)">24/7 Autonomous Polling</div>
                             <div style="font-size:12.5px;color:var(--dim);margin-top:2px">If ON, tasks execute from
-                                Telegram endlessly in the background.</div>
+                                Telegram in the background. (Only 1 tab can poll at a time)</div>
                         </div>
-                        <label class="switch tg-sw"><input type="checkbox" id="c-auto" onchange="tgTog()"><span
-                                class="slider"></span></label>
+                        <div style="display:flex;align-items:center;gap:15px">
+                            <button class="btn" id="btn-tg-lock" style="padding:6px 12px;font-size:11px;display:none"
+                                onclick="tgTakeControl()">Take Control</button>
+                            <label class="switch tg-sw"><input type="checkbox" id="c-auto" onchange="tgTog()"><span
+                                    class="slider"></span></label>
+                        </div>
                     </div>
+                </div>
+
+                <!-- Instagram Channel (Coming Soon) -->
+                <div class="card" style="opacity:0.6; filter:grayscale(0.5); border-left: 4px solid #E1306C">
+                    <div class="c-head" style="display:flex;align-items:center;justify-content:space-between">
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <i data-lucide="instagram" style="color:#E1306C"></i>
+                            Instagram Business
+                        </div>
+                        <span
+                            style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(225,48,108,0.1);color:#E1306C;border:1px solid rgba(225,48,108,0.3);font-weight:700">COMING
+                            SOON</span>
+                    </div>
+                    <p style="font-size:13px;color:var(--dim);line-height:1.5">
+                        Automate Direct Messages and comment replies via Instagram Graph API. Currently in development
+                        alpha.
+                    </p>
+                </div>
+
+                <!-- Facebook Channel (Coming Soon) -->
+                <div class="card" style="opacity:0.6; filter:grayscale(0.5); border-left: 4px solid #1877F2">
+                    <div class="c-head" style="display:flex;align-items:center;justify-content:space-between">
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <i data-lucide="facebook" style="color:#1877F2"></i>
+                            Facebook Messenger
+                        </div>
+                        <span
+                            style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(24,119,242,0.1);color:#1877F2;border:1px solid rgba(24,119,242,0.3);font-weight:700">PLANNED</span>
+                    </div>
+                    <p style="font-size:13px;color:var(--dim);line-height:1.5">
+                        Expand your reach to Facebook fans with autonomous Messenger responses. Integration roadmap set
+                        for Q3 2026.
+                    </p>
                 </div>
 
                 <!-- Known Telegram Users Directory -->
                 <div class="card">
                     <div class="c-head"><i data-lucide="users"></i> Known Telegram Users</div>
-                    <p style="font-size:13px;color:var(--dim);line-height:1.5;margin-bottom:12px">Every user who
-                        messages your bot is auto-registered here. The AI can send messages to any of these users
-                        autonomously when instructed. You can also dispatch a quick manual message.</p>
+                    <p style="font-size:13px;color:var(--dim);line-height:1.5;margin-bottom:12px">Users are
+                        auto-registered when they message your bot. The AI can send messages to them autonomously.</p>
                     <div id="tg-users-list">
-                        <div style="font-size:12px;color:var(--dim);padding:10px 0">No users yet. Users are
-                            auto-registered when they message the bot.</div>
+                        <div style="font-size:12px;color:var(--dim);padding:10px 0">No users yet.</div>
                     </div>
                 </div>
+
             </div>
         </div>
 

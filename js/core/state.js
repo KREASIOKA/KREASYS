@@ -66,7 +66,7 @@ async function ld() {
     $('#c-tmp').value = st.cfg.tmp;
     $('#c-tmp').nextElementSibling.innerText = st.cfg.tmp;
     rVfs();
-    renderTgUsers(); // render known users in Integrations tab
+    renderTgUsers(); // render known users in Channeling tab
 }
 
 async function svGlb() {
@@ -78,7 +78,7 @@ async function svGlb() {
 
 function ckDb() { localforage.length().then(c => $('#st-db').className = c > 0 ? 'dot ok' : 'dot err').catch(() => $('#st-db').className = 'dot err') }
 
-/** Render the known Telegram users directory in the Integrations tab */
+/** Render the known Telegram users directory in the Channeling tab */
 function renderTgUsers() {
     const container = document.getElementById('tg-users-list');
     if (!container) return;

@@ -1,12 +1,26 @@
+const _TG_TAB_ID = Math.random().toString(36).substring(2, 10);
+let _tgLockActive = false;
+
 function tgTog() {
     st.cfg.auto = $('#c-auto').checked; svGlb();
     if (st.cfg.auto) {
-        lg('SYS', 'Telegram: 24/7 polling enabled.');
-        if (!st.poll) st.poll = setInterval(tgPoll, 5000);
+        lg('SYS', 'Telegram: 24/7 autonomous mode toggled ON.');
+        tgTakeControl(); // Try to take the lock
     } else {
         lg('SYS', 'Telegram: Polling disabled.');
         if (st.poll) { clearInterval(st.poll); st.poll = 0; }
+        _tgLockActive = false;
     }
+}
+
+/** Take ownership of Telegram polling for this browser tab */
+function tgTakeControl() {
+    localStorage.setItem('tg_lock', _TG_TAB_ID);
+    localStorage.setItem('tg_lock_time', Date.now());
+    _tgLockActive = true;
+    if (!st.poll) st.poll = setInterval(tgPoll, 5000);
+    $('#btn-tg-lock').style.display = 'none';
+    lg('SYS', 'Telegram: This tab has taken control of the bot polling.');
 }
 
 async function tstTg() {
@@ -140,9 +154,35 @@ CRITICAL RULE: You are responding to a Telegram message from ${uname}. Plain tex
 
 async function tgPoll() {
     if (!st.cfg.tg || !st.cfg.auto) return;
+
+    // EXCLUSIVE LOCK CHECK: Only 1 tab can poll to avoid 409 Conflict
+    const curLock = localStorage.getItem('tg_lock');
+    const lockTime = parseInt(localStorage.getItem('tg_lock_time') || '0');
+    const isLockFresh = (Date.now() - lockTime) < 15000;
+
+    if (curLock && curLock !== _TG_TAB_ID && isLockFresh) {
+        if (_tgLockActive) {
+            lg('WAR', 'Telegram: Polling paused. Another tab has taken control.');
+            _tgLockActive = false;
+        }
+        $('#btn-tg-lock').style.display = 'inline-block';
+        $('#st-tg').className = 'dot dim';
+        return;
+    }
+
+    // Refresh lock
+    localStorage.setItem('tg_lock', _TG_TAB_ID);
+    localStorage.setItem('tg_lock_time', Date.now());
+    _tgLockActive = true;
+    $('#btn-tg-lock').style.display = 'none';
+
     const t = st.cfg.tg;
     try {
         const r = await fetch(`https://api.telegram.org/bot${t}/getUpdates?offset=${st.id}&timeout=5`);
+        if (r.status === 409) {
+            lg('ERR', 'Telegram API Conflict (409). Waiting for lock...');
+            return;
+        }
         const d = await r.json();
         if (d.ok) {
             $('#st-tg').className = 'dot ok';
@@ -179,12 +219,18 @@ async function tgPoll() {
 
                 // Handle text messages
                 if (m.text) {
-                    lg('SYS', `TG [${m.from.username || m.from.first_name}]: ${m.text}`);
+                    lg('SYS', `TG Inbox [${m.from.username || m.from.first_name}]: ${m.text}`);
                     tgXc(m, t, null);
                 }
             }
         } else {
             $('#st-tg').className = 'dot err';
+            lg('ERR', `Telegram: ${d.description}`);
         }
-    } catch (e) { $('#st-tg').className = 'dot err'; }
+    } catch (e) {
+        $('#st-tg').className = 'dot err';
+        if (e.message.includes('409') || e.message.includes('terminated')) {
+            lg('WAR', 'Telegram: Conflict detected. Refreshing instance...');
+        }
+    }
 }
