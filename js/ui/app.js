@@ -5,6 +5,7 @@ async function boot() {
     await ld();
     uiMod();
     bind();
+    wllmInit();
     setInterval(hlth, 1000);
     if (st.cfg.auto) tgTog();
     lg('SYS', 'KREASYS Core Initialized. VFS Data securely segregated.');
@@ -241,3 +242,129 @@ function hlth() {
 
 // Start sequence
 boot();
+
+// ── WebLLM UI ─────────────────────────────────────────────────────────────────
+
+/** Called on boot: WebGPU check + initial library render */
+function wllmInit() {
+    if (typeof wCheckGPU !== 'function') return;
+    if (!wCheckGPU()) {
+        const warn = document.getElementById('wllm-gpu-warn');
+        if (warn) warn.style.display = 'block';
+        lg('SYS', 'WebLLM: WebGPU not available in this browser.');
+    } else {
+        navigator.gpu.requestAdapter().then(a => {
+            if (a && a.name) lg('SYS', `WebLLM: WebGPU adapter: ${a.name}`);
+        }).catch(() => { });
+    }
+    renderWllmLibrary();
+}
+
+/**
+ * Renders the full model library grid into #wllm-library.
+ * Shows every model with: status badge (Installed / Available), size, family,
+ * and action buttons: Load/Activate, Test, Delete.
+ */
+function renderWllmLibrary() {
+    const container = document.getElementById('wllm-library');
+    if (!container || typeof wGetModels !== 'function') return;
+
+    const models = wGetModels();
+    const lib = (typeof wLib === 'function') ? wLib() : {};
+    const active = (typeof wActiveModel === 'function') ? wActiveModel() : null;
+    const gpuOk = (typeof wCheckGPU === 'function') ? wCheckGPU() : false;
+
+    // Group labels
+    const sizeLabels = { 0.27: 'Tiny', 0.64: 'Tiny', 0.46: 'Tiny', 1.0: 'Small', 1.4: 'Small', 0.66: 'Small', 0.84: 'Small', 1.9: 'Medium', 2.1: 'Medium', 4.9: 'Large', 4.1: 'Large', 4.4: 'Large', 5.2: 'Large', 5.0: 'Large' };
+    const sizeGroups = {};
+    models.forEach(m => {
+        const gb = m.sizeGB;
+        const g = gb < 1 ? 'Tiny — Any Machine' : gb < 2 ? 'Small — Budget GPU' : gb < 4 ? 'Medium — Mainstream GPU' : 'Large — Dedicated GPU';
+        (sizeGroups[g] = sizeGroups[g] || []).push(m);
+    });
+
+    container.innerHTML = '';
+
+    Object.entries(sizeGroups).forEach(([groupName, mods]) => {
+        const grpHdr = document.createElement('div');
+        grpHdr.style.cssText = 'font-size:10px;font-weight:700;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;padding:6px 0 4px;border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:4px';
+        grpHdr.textContent = groupName;
+        container.appendChild(grpHdr);
+
+        mods.forEach(m => {
+            const isInstalled = !!lib[m.id];
+            const isActive = active === m.id;
+            const safeId = m.id.replace(/[^a-z0-9]/gi, '_');
+
+            const row = document.createElement('div');
+            row.style.cssText = `display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid ${isActive ? 'rgba(0,255,204,0.3)' : isInstalled ? 'rgba(0,179,255,0.2)' : 'rgba(255,255,255,0.05)'};background:${isActive ? 'rgba(0,255,204,0.05)' : isInstalled ? 'rgba(0,179,255,0.04)' : 'rgba(255,255,255,0.02)'};flex-wrap:wrap;`;
+
+            // Status dot + label
+            const dotColor = isActive ? 'var(--ok)' : isInstalled ? 'var(--ac2)' : 'var(--dim)';
+            const statusLabel = isActive ? 'Active' : isInstalled ? 'Installed' : 'Not Downloaded';
+
+            // Download date tooltip
+            const dlDate = lib[m.id]?.downloadedAt ? `Downloaded: ${new Date(lib[m.id].downloadedAt).toLocaleDateString()}` : '';
+
+            row.innerHTML = `
+                <span style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0;" title="${statusLabel}"></span>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.label}</div>
+                    <div style="font-size:11px;color:var(--dim);display:flex;gap:10px;flex-wrap:wrap;margin-top:2px">
+                        <span>${m.family}</span><span>${m.vram}</span>${dlDate ? `<span style="color:var(--ac2)">${dlDate}</span>` : ''}
+                    </div>
+                </div>
+                <span style="font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:.5px;white-space:nowrap;background:${isActive ? 'rgba(0,255,204,0.15)' : isInstalled ? 'rgba(0,179,255,0.12)' : 'rgba(255,255,255,0.05)'};color:${isActive ? 'var(--ac)' : isInstalled ? 'var(--ac2)' : 'var(--dim)'}">${statusLabel}</span>
+                <div style="display:flex;gap:6px;flex-shrink:0">
+                    ${isActive
+                    ? `<button class="btn err" onclick="wUnload()" style="padding:6px 10px;font-size:12px" title="Unload from GPU"><i data-lucide="power"></i> Unload</button>`
+                    : `<button class="btn ${isInstalled ? 'okc' : 'primary'}" onclick="wllmActivate('${m.id}')" ${!gpuOk ? 'disabled title="WebGPU not available"' : ''} style="padding:6px 12px;font-size:12px"><i data-lucide="${isInstalled ? 'play' : 'download-cloud'}"></i> ${isInstalled ? 'Activate' : 'Download &amp; Load'}</button>`
+                }
+                    ${isInstalled
+                    ? `<button id="wllm-test-${safeId}" class="btn" onclick="wTest('${m.id}')" ${!isActive ? 'disabled title="Load this model first to test it"' : ''} style="padding:6px 10px;font-size:12px" title="Send a ping to verify the model"><i data-lucide="radio"></i> Test</button>
+                           <button class="btn err" onclick="wllmDelete('${m.id}')" style="padding:6px 10px;font-size:12px" title="Remove from browser cache"><i data-lucide="trash-2"></i></button>`
+                    : ''
+                }
+                </div>`;
+            container.appendChild(row);
+        });
+    });
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+/** Download + activate a model (or just activate if already installed) */
+async function wllmActivate(modelId) {
+    // Register in router
+    const meta = (typeof wGetModels === 'function') ? wGetModels().find(m => m.id === modelId) : null;
+    const label = meta ? meta.label : modelId;
+    const existing = st.mods.find(m => m.p === 'webllm');
+    if (existing) { existing.m = modelId; existing.n = 'Local AI: ' + label; }
+    else { st.mods.unshift({ id: 'wllm-local', n: 'Local AI: ' + label, p: 'webllm', m: modelId, k: '', e: '', t: 'text' }); }
+    await svGlb();
+    uiMod();
+    renderWllmLibrary();
+
+    await wLoad(modelId);
+    renderWllmLibrary();
+    wUpdateStatusPill();
+}
+
+/** Permanently delete a model from cache + library */
+async function wllmDelete(modelId) {
+    if (!confirm(`Remove "${modelId}" from your browser cache? You will need to download it again.`)) return;
+    await wDeleteModel(modelId);       // from webllm.js — handles cache + state
+    // Remove from router if it was the webllm entry
+    const idx = st.mods.findIndex(m => m.p === 'webllm' && m.m === modelId);
+    if (idx !== -1) { st.mods.splice(idx, 1); await svGlb(); uiMod(); }
+    renderWllmLibrary();
+    wUpdateStatusPill();
+}
+
+/** Legacy compatibility for old onClick handlers — now delegates to wllmActivate */
+async function wllmLoad() {
+    const sel = document.getElementById('wllm-model-select');
+    if (sel && sel.value) await wllmActivate(sel.value);
+}
+
+

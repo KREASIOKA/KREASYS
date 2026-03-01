@@ -728,6 +728,11 @@ input:checked+.slider:before {
     animation: pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
+.flow-step.active i {
+    animation: spin 2s linear infinite;
+}
+
+
 .flow-step.done {
     color: var(--ok);
     background: rgba(57, 255, 20, 0.1);
@@ -735,16 +740,21 @@ input:checked+.slider:before {
 }
 
 @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 255, 204, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 255, 204, 0); }
+}
 
-    0%,
-    100% {
-        opacity: 1;
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
     }
 
-    50% {
-        opacity: 0.6;
+    to {
+        transform: rotate(360deg);
     }
 }
+
 
 .flow-arrow {
     color: var(--dim);

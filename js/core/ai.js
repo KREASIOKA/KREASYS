@@ -1,6 +1,17 @@
 async function llm(p, u, mod) {
     if (!st.mods.length) throw new Error("No models configured.");
     const m = mod || st.mods[0];
+
+    // --- WebLLM local inference path ---
+    if (m.p === 'webllm') {
+        if (typeof wIsReady === 'function' && wIsReady()) {
+            return await wLlm(p, u, st.cfg.tmp, false);
+        } else {
+            throw new Error('WebLLM model is not loaded. Please load a local model first from the Models tab.');
+        }
+    }
+
+    // --- Remote API path ---
     const url = m.p === 'custom' ? m.e : PRV[m.p];
     if (!url || !m.k) throw new Error(`Invalid URL or Key for ${m.n}.`);
     const b = { model: m.m, messages: [{ role: 'system', content: p }, { role: 'user', content: u }], temperature: st.cfg.tmp };
@@ -12,6 +23,15 @@ async function llm(p, u, mod) {
 }
 
 async function route(q) {
+    // If a local WebLLM model is loaded, always prioritize it for text tasks
+    if (typeof wIsReady === 'function' && wIsReady()) {
+        const localMod = st.mods.find(m => m.p === 'webllm');
+        if (localMod) {
+            lg('SYS', `Router: Using local WebLLM engine [${localMod.n}]`);
+            return localMod;
+        }
+    }
+
     if (st.mods.length === 1) return st.mods[0];
 
     let reqType = 'text';
@@ -19,9 +39,11 @@ async function route(q) {
     if (lq.includes('generate image') || lq.includes('draw') || lq.includes('create an image')) reqType = 'image';
     else if (lq.includes('generate audio') || lq.includes('speak') || lq.includes('text to speech')) reqType = 'audio';
     else if (lq.includes('generate video') || lq.includes('animate')) reqType = 'video';
+    else if (lq.includes('look at') || lq.includes('describe this') || lq.includes('vision') || attachment) reqType = 'multimodal';
 
-    const avail = st.mods.filter(m => (m.t || 'text') === reqType);
-    if (avail.length === 0) return st.mods[0];
+    // Filter for models matching the request type, or 'multimodal' models which can handle multiple types
+    const avail = st.mods.filter(m => (m.t === reqType || m.t === 'multimodal') && m.p !== 'webllm');
+    if (avail.length === 0) return st.mods.filter(m => m.p !== 'webllm')[0] || st.mods[0];
     if (avail.length === 1) return avail[0];
 
     const p = `You are a Router. Available Models:\n${avail.map(m => `- ${m.id} (${m.m})`).join('\n')}\nAnalyze user query and return ONLY the ID of the best model. IF unknown, return ${avail[0].id}.`;
@@ -59,23 +81,31 @@ ${knownUsers}
     }
 
     try {
-        const r = await llm(p, userMsg, m);
-        if (typeof psPlan === 'function') psPlan(r);
-        lg('AGT', r);
+        // WebLLM streaming path: render live tokens directly in chat bubble
+        if (m.p === 'webllm' && isC && typeof wIsReady === 'function' && wIsReady()) {
+            const r = await wLlm(p, userMsg, st.cfg.tmp, true /* streaming into chat */);
+            if (typeof psPlan === 'function') psPlan(r);
+            lg('AGT', r);
+            psVfs(r);
+        } else {
+            const r = await llm(p, userMsg, m);
+            if (typeof psPlan === 'function') psPlan(r);
+            lg('AGT', r);
 
-        if (st.cfg.tg) {
-            const tgRg = /<tg_send\s+chat_id=["']?([^"'>]+)["']?>([\s\S]*?)<\/tg_send>/gi;
-            let tm;
-            while ((tm = tgRg.exec(r)) !== null) {
-                const tgtId = tm[1];
-                const payload = tm[2].trim();
-                lg('SYS', `Autonomous Dispatch -> TG ID: ${tgtId}`);
-                fetch(`https://api.telegram.org/bot${st.cfg.tg}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: tgtId, text: payload }) }).catch(e => lg('ERR', `TG Dispatch failed: ${e.message}`));
+            if (st.cfg.tg) {
+                const tgRg = /<tg_send\s+chat_id=["']?([^"'>]+)["']?>([\s\S]*?)<\/tg_send>/gi;
+                let tm;
+                while ((tm = tgRg.exec(r)) !== null) {
+                    const tgtId = tm[1];
+                    const payload = tm[2].trim();
+                    lg('SYS', `Autonomous Dispatch -> TG ID: ${tgtId}`);
+                    fetch(`https://api.telegram.org/bot${st.cfg.tg}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: tgtId, text: payload }) }).catch(e => lg('ERR', `TG Dispatch failed: ${e.message}`));
+                }
             }
-        }
 
-        if (isC) chLg('AGT', r.replace(/<file[^>]*>[\s\S]*?<\/file>/g, '*[VFS update occurred - Check IDE Workspace]*').replace(/<plan[^>]*>[\s\S]*?<\/plan>/gi, '').replace(/<tg_send[^>]*>[\s\S]*?<\/tg_send>/gi, '*[Autonomous Telegram Message Dispatched]*'));
-        psVfs(r);
+            if (isC) chLg('AGT', r.replace(/<file[^>]*>[\s\S]*?<\/file>/g, '*[VFS update occurred - Check IDE Workspace]*').replace(/<plan[^>]*>[\s\S]*?<\/plan>/gi, '').replace(/<tg_send[^>]*>[\s\S]*?<\/tg_send>/gi, '*[Autonomous Telegram Message Dispatched]*'));
+            psVfs(r);
+        }
     } catch (e) { lg('ERR', e.message); if (isC) chLg('AGT', `**Error:** ${e.message}`) }
 
     st.run = 0;

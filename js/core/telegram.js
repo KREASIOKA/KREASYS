@@ -62,13 +62,18 @@ ${knownUsers}
             fetch(`https://api.telegram.org/bot${t}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: tgtId, text: payload }) }).catch(e => lg('ERR', `TG Dispatch failed: ${e.message}`));
         }
 
-        // Handle <media> image replies via sendPhoto
-        const mediaM = r.match(/<media\s+type="image"\s+url="([^"]+)"\s*\/>/i);
-        if (mediaM) {
-            fetch(`https://api.telegram.org/bot${t}/sendPhoto`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: msg.chat.id, photo: mediaM[1] }) }).catch(e => lg('ERR', `TG Photo send failed: ${e.message}`));
+        // Handle <media> image/audio/video replies
+        const mediaRg = /<media\s+type=["'](image|audio|video)["']\s+url=["']([^"']+)["']\s*\/?>/gi;
+        let mm;
+        while ((mm = mediaRg.exec(r)) !== null) {
+            const type = mm[1], url = mm[2];
+            let api = 'sendPhoto', key = 'photo';
+            if (type === 'audio') { api = 'sendAudio'; key = 'audio'; }
+            if (type === 'video') { api = 'sendVideo'; key = 'video'; }
+            fetch(`https://api.telegram.org/bot${t}/${api}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: msg.chat.id, [key]: url }) }).catch(e => lg('ERR', `TG ${type} send failed: ${e.message}`));
         }
 
-        let cleanReply = r.replace(/<file[^>]*>[\s\S]*?<\/file>/g, '').replace(/<tg_send[^>]*>[\s\S]*?<\/tg_send>/g, '').replace(/<media[^>]*\/>/g, '').trim();
+        let cleanReply = r.replace(/<file[^>]*>[\s\S]*?<\/file>/g, '').replace(/<tg_send[^>]*>[\s\S]*?<\/tg_send>/g, '').replace(/<media[^>]*\/>/gi, '').trim();
         if (!cleanReply) cleanReply = "✅ Request processed.";
 
         if (cleanReply) {
