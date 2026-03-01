@@ -21,120 +21,118 @@
     <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black" alt="js">
     <img src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white" alt="html">
     <img src="https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="css">
-    <img src="https://img.shields.io/badge/WebGPU-Ready-00ffcc?style=flat-square" alt="webgpu">
-    <img src="https://img.shields.io/badge/PWA-Supported-673AB7?style=flat-square&logo=pwa&logoColor=white" alt="pwa">
+    <img src="https://img.shields.io/badge/WebGPU-Enabled-00ffcc?style=flat-square&logo=webgpu&logoColor=white" alt="webgpu">
+    <img src="https://img.shields.io/badge/PWA-Certified-673AB7?style=flat-square&logo=pwa&logoColor=white" alt="pwa">
   </p>
 </div>
 
 ---
 
-### Notice: Early Development Alpha
-> **Disclaimer:** We sincerely apologize for the current lack of comprehensive documentation. **KREASYS** is in its very early alpha stages of development. Features are currently minimal, the codebase is rapidly evolving, and bugs are to be expected. We appreciate your patience and contributions!
+### <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/triangle-exclamation.svg" width="20" height="20"> Notice: Early Development Alpha
+> **Disclaimer:** KREASYS is currently in its early alpha stages of development. Features are evolving rapidly, and the codebase is subjected to significant changes. We appreciate your technical contributions and feedback during this phase.
 
 ---
 
-## Navigation
+## <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/compass.svg" width="20" height="20"> Navigation
 - [What is KREASYS?](#what-is-kreasys)
 - [System Architecture](#system-architecture)
-- [WebLLM and Local AI](#webllm-and-local-ai)
-- [How It Works](#how-it-works)
+- [Local AI Ecosystem](#local-ai-ecosystem)
+- [Self-Modifying Memory](#self-modifying-memory)
+- [Telegram Autonomous Hub](#telegram-autonomous-hub)
 - [Core Components](#core-components)
 - [Quick Start](#quick-start)
-- [Contributors](#contributors)
 
 ---
 
-## What is KREASYS?
-Developed by the **KREASIOKA team** ([www.kreasioka.com](https://www.kreasioka.com)), **KREASYS** is a hyper-modular, browser-native IDE designed for autonomous AI interaction. It allows AI agents to operate within a sandboxed Virtual File System (VFS), creating and editing files while maintaining a persistent memory loop—all without a server backend.
+## <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/circle-info.svg" width="20" height="20"> What is KREASYS?
+Developed by the **KREASIOKA team**, **KREASYS** is a hyper-modular, browser-native IDE designed for autonomous AI interaction. It allows AI agents to operate within a sandboxed Virtual File System (VFS), creating and editing files while maintaining a persistent memory loop—all without a server backend.
 
-### Key Capabilities
-- **Browser-Native VFS:** Persistent hierarchical storage using IndexedDB (localforage).
-- **WebLLM Local Inference:** Run powerful LLMs (Llama 3, Phi 3, etc.) entirely in your browser via WebGPU—**no API keys required**.
-- **Multi-Modal Routing:** Intent-based model selection (Text, Image, Audio, Video).
-- **Autonomous Delegation:** Background-polling Telegram bot support for remote interaction.
-- **Visual Task Tracking:** Live execution flowcharts rendered via AI plan parsing.
+### <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/bolt.svg" width="18" height="18"> Key Capabilities
+- **Browser-Native VFS:** Persistent hierarchical storage using IndexedDB (localforage) for secure, local-first development.
+- **WebLLM Dedicated Engine:** Run powerful LLMs (Llama 3.1, Phi 3, etc.) entirely on your local GPU via WebGPU.
+- **Smart Memory System:** Automatic summarization of logs into persistent memory to prevent context bloat.
+- **Autonomous Delegation:** Full Telegram integration with cross-user messaging and automated task execution.
+- **Multi-Modal Routing:** Intent-based model selection (Text, Image, Audio, Video, Vision).
 
 ---
 
-## System Architecture
+## <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/sitemap.svg" width="20" height="20"> System Architecture
 KREASYS follows a reactive, event-driven architecture that separates state persistence from UI rendering.
 
 ```mermaid
 graph TD
     User([User Input]) --> Router{Intent Router}
     Router -->|Local| WLLM[WebLLM Engine - GPU]
-    Router -->|Remote| API[API Provider - Groq/NVIDIA]
+    Router -->|Remote| API[API Providers]
     
-    WLLM --> Parser[Directive Parser]
-    API --> Parser
-
-    Parser --> VFS[(Virtual File System)]
-    Parser --> TG[Telegram Dispatcher]
-    Parser --> Flow[Animated Flowchart UI]
-    Parser --> Notify[Toast Notifications]
+    WLLM --> Memory[Memory Summarizer]
+    API --> Memory
     
-    VFS --> State[Persistent State Manager]
-    State --> Context[AI System Prompt]
-    Context --> Router
+    Memory --> VFS[(Virtual File System)]
+    Memory --> TG[Telegram / User Hub]
+    Memory --> UI[Unified Interface]
 ```
 
 ---
 
-## WebLLM and Local AI
-KREASYS features a full **Model Library Manager** that leverages the **WebLLM** library.
+## <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/microchip.svg" width="20" height="20"> Local AI Ecosystem
+KREASYS features a dedicated **Local AI** tab that leverages the **WebLLM** library for true privacy and speed.
 
-- **Private and Offline:** Once downloaded, models run entirely on your local GPU.
-- **Model tiers:** Supports models from 100M (Tiny) to 9B (Large) parameters.
-- **Tracking:** Monitor download progress, delete cached models, and test engine availability directly from the UI.
-- **Cache Management:** Models are stored in the browser's Cache Storage API for instant subsequent loads.
-
----
-
-## How It Works
-The core logic resides in a high-speed inference loop that injects the current state of the VFS into every AI thought process.
-
-1. **State Initialization (state.js):** Loads saved configuration, persona directives, and VFS data from local storage.
-2. **Context Assembly:** Aggregates file contents from /workspace/ and system logs into a structured context window.
-3. **Intent-Model Mapping (ai.js):** The route() function analyzes the query to select the most efficient model for the task.
-4. **Directive Parsing (vfs.js):** The engine monitors AI output for structural tags.
-   - `<file path="...">` triggers atomic VFS writes.
-   - `<tg_send chat_id="...">` initiates autonomous external messaging.
-   - `<plan>` tags drive the visual flowchart animations.
+- **Private & Metadata-Secure:** Once downloaded, models run entirely on your local GPU with no external data leakage.
+- **Hardware Acceleration:** Full WebGPU utilization for near-native inference speeds in the browser.
+- **Model Library:** Manage Llama, Phi, Gemma, and Mistral families directly from the UI.
+- **Seamless Loading:** Models are cached in the browser's Cache Storage API for instant subsequent use.
 
 ---
 
-## Core Components
+## <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/brain.svg" width="20" height="20"> Self-Modifying Memory
+The V2 memory system introduces a dual-layer architecture to handle long-running autonomous tasks:
 
-### 1. State Management (js/core/state.js)
-This is the application's central nervous system. It handles the `st` global object and ensures atomic synchronization to localforage.
-
-### 2. Local AI Engine (js/core/webllm.js)
-Manages the WebGPU inference lifecycle, model library rendering, and cache deletion logic.
-
-### 3. Virtual File System (js/core/vfs.js)
-Manages the memory-mapped file tree and serializes the workspace for AI context injection.
-
-### 4. Telegram Integration (js/core/telegram.js)
-Handles long-polling, file attachments (images/docs), and autonomous multi-media dispatches.
+1. **Memory Log (`/system/memory.log`):** Raw session activity used for immediate context.
+2. **Persistent Memory (`/system/memory.md`):** AI-summarized facts, user preferences, and key progress.
+- **Autonomous Summarization:** When idle, the system automatically compresses the raw log into the persistent memory file, clearing the log to maintain high-quality context and prevent hallucinations.
 
 ---
 
-## Quick Start
-Since KREASYS is strictly client-side, you only need a local static server to bypass CORS restrictions during development.
+## <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/paper-plane.svg" width="20" height="20"> Telegram Autonomous Hub
+The Telegram integration allows KREASYS to act as a 24/7 autonomous employee.
+
+- **User Directory:** Automatically registers everyone who interacts with the bot.
+- **Cross-User Messaging:** One user can instruct the AI to contact another user via the directory.
+- **Multi-Media Support:** Process and send images, documents, and audio autonomously.
+- **Remote VFS Access:** Edit and view your workspace files via Telegram commands.
+
+---
+
+## <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/cubes.svg" width="20" height="20"> Core Components
+
+### 1. State Management (`js/core/state.js`)
+The application's central nervous system. It handles the `st` global object and coordinates atomic synchronization.
+
+### 2. Autonomous Memory (`js/core/memory.js`)
+Manages the idle-time summarization loop and the dual-layer context injection logic.
+
+### 3. Native IDE Engine (`js/core/vfs.js`)
+Manages the memory-mapped file tree and provides the AI with a structured view of the workspace.
+
+---
+
+## <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/terminal.svg" width="20" height="20"> Quick Start
+KREASYS is strictly client-side. You only need a local static server to bypass CORS during development.
 
 ```bash
 # Clone the repository
 git clone https://github.com/KREASIOKA/KREASYS/
 
-# Serve locally
+# Serve locally (WebGPU requires localhost/HTTPS)
 python3 -m http.server 8080
 ```
-Open http://localhost:8080 and enter your API keys or download a local model in the **Models** tab.
+Open `http://localhost:8080` to begin. Configure your models in the **Models** and **Local AI** tabs.
 
 ---
 
-## Contributors
-We welcome contributions from the developer community to advance browser-native AI!
+## <img src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/svgs/solid/users.svg" width="20" height="20"> Contributors
+We welcome contributions to advance the frontier of browser-native AI!
 
 <div align="center">
   <a href="https://github.com/KREASIOKA/KREASYS/graphs/contributors">

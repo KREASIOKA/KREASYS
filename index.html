@@ -31,7 +31,8 @@
         <div class="nav-tab active" data-target="p-chat"><i data-lucide="message-square"></i> Chat</div>
         <div class="nav-tab" data-target="p-ide"><i data-lucide="code-2"></i> Workspace</div>
         <div class="nav-tab" data-target="p-id"><i data-lucide="brain-circuit"></i> Core Data</div>
-        <div class="nav-tab" data-target="p-mod"><i data-lucide="cpu"></i> Models</div>
+        <div class="nav-tab" data-target="p-mod"><i data-lucide="network"></i> Models</div>
+        <div class="nav-tab" data-target="p-wllm"><i data-lucide="cpu"></i> Local AI</div>
         <div class="nav-tab" data-target="p-term"><i data-lucide="activity"></i> SysLog</div>
         <div class="nav-tab" data-target="p-cfg"><i data-lucide="webhook"></i> Integrations</div>
         <button class="btn primary" id="btn-install" onclick="deferredInstallPrompt&&deferredInstallPrompt.prompt()"
@@ -174,8 +175,20 @@
                     <button class="btn" style="margin-top:10px;align-self:flex-start" onclick="addModUI()"><i
                             data-lucide="plus"></i> Add New Model</button>
                 </div>
-                <!-- Local AI (WebLLM) Model Library -->
-                <div class="card" id="wllm-card" style="border-color:rgba(0,255,204,0.2);">
+
+                <div class="card">
+                    <div class="c-head"><i data-lucide="settings-2"></i> Inference Params</div>
+                    <div class="cfg-row"><span>Temperature</span><input type="range" id="c-tmp" min="0" max="2"
+                            step="0.1" oninput="this.nextElementSibling.innerText=this.value;svGlb()"><span
+                            style="color:var(--ac);font-weight:700"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── LOCAL AI (WebLLM) — Dedicated Tab ──────────────────────────── -->
+        <div id="p-wllm" class="panel">
+            <div style="max-width:1000px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:15px">
+                <div class="card" style="border-color:rgba(0,255,204,0.2)">
                     <div class="c-head"
                         style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
                         <div style="display:flex;align-items:center;gap:10px">
@@ -192,22 +205,20 @@
                         </div>
                     </div>
 
-                    <!-- WebGPU warning -->
                     <div id="wllm-gpu-warn"
                         style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,204,0,0.08);border:1px solid rgba(255,204,0,0.3);border-radius:8px;font-size:12.5px;color:var(--war);line-height:1.6">
                         <i data-lucide="alert-triangle"
                             style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px"></i>
-                        <strong>WebGPU not detected.</strong> Use Chrome 113+, Edge 113+, or Safari 18+.
+                        <strong>WebGPU not detected.</strong> Use Chrome 113+, Edge 113+, or Safari 18+ with a
+                        compatible GPU.
                     </div>
 
                     <p style="font-size:13px;color:var(--dim);line-height:1.6;margin-bottom:16px">Run open-source LLMs
                         entirely in your browser — <strong style="color:var(--txt)">no API key required</strong>. Models
-                        downloaded once are cached for instant reuse. Click <strong
-                            style="color:var(--txt)">Load</strong> to activate a model; <strong
-                            style="color:var(--txt)">Delete</strong> to permanently remove it from your browser cache.
-                    </p>
+                        are downloaded once and cached for instant reuse. Click <strong
+                            style="color:var(--txt)">Download &amp; Load</strong> to activate a model; <strong
+                            style="color:var(--txt)">Delete</strong> to remove it from your browser cache.</p>
 
-                    <!-- Global progress bar (shown during any download) -->
                     <div id="wllm-progress-wrap" style="display:none;margin-bottom:16px">
                         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
                             <span
@@ -222,8 +233,7 @@
                         </div>
                     </div>
 
-                    <!-- Dynamic model library — rendered by renderWllmLibrary() in app.js -->
-                    <div id="wllm-library" style="display:flex;flex-direction:column;gap:8px;"></div>
+                    <div id="wllm-library" style="display:flex;flex-direction:column;gap:8px"></div>
 
                     <p style="font-size:11.5px;color:var(--dim);margin-top:14px;line-height:1.5">
                         <i data-lucide="info"
@@ -232,16 +242,6 @@
                             style="color:var(--ac2);text-decoration:none">WebLLM</a> &amp; WebGPU. Models are stored in
                         your browser's Cache Storage.
                     </p>
-                </div>
-
-
-
-
-                <div class="card">
-                    <div class="c-head"><i data-lucide="settings-2"></i> Inference Params</div>
-                    <div class="cfg-row"><span>Temperature</span><input type="range" id="c-tmp" min="0" max="2"
-                            step="0.1" oninput="this.nextElementSibling.innerText=this.value;svGlb()"><span
-                            style="color:var(--ac);font-weight:700"></span></div>
                 </div>
             </div>
         </div>
@@ -277,10 +277,9 @@
             <div style="max-width:800px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:15px">
                 <div class="card">
                     <div class="c-head"><i data-lucide="send"></i> Telegram Webhooks</div>
-                    <p style="font-size:13px;color:var(--dim);line-height:1.5;margin-bottom:10px">Due to CORS limits in
-                        pure browsers,
-                        Discord is unsupported natively. Telegram works flawlessly. Enter your BotFather token below.
-                    </p>
+                    <p style="font-size:13px;color:var(--dim);line-height:1.5;margin-bottom:10px">Enter your BotFather
+                        token below. The AI will auto-register every user who messages the bot and can dispatch messages
+                        cross-user autonomously.</p>
                     <div style="display:flex;gap:10px;flex-wrap:wrap">
                         <input type="password" id="c-tg" placeholder="Bot Token" style="flex:1;min-width:200px"
                             oninput="svGlb()">
@@ -291,12 +290,23 @@
                         style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);padding:16px;border-radius:6px;border:1px solid var(--bd);margin-top:15px">
                         <div>
                             <div style="font-weight:600;font-size:15px;color:var(--txt)">24/7 Autonomous Polling</div>
-                            <div style="font-size:12.5px;color:var(--dim);margin-top:2px;">If ON, tasks execute from
-                                Telegram endlessy.
-                            </div>
+                            <div style="font-size:12.5px;color:var(--dim);margin-top:2px">If ON, tasks execute from
+                                Telegram endlessly in the background.</div>
                         </div>
                         <label class="switch tg-sw"><input type="checkbox" id="c-auto" onchange="tgTog()"><span
                                 class="slider"></span></label>
+                    </div>
+                </div>
+
+                <!-- Known Telegram Users Directory -->
+                <div class="card">
+                    <div class="c-head"><i data-lucide="users"></i> Known Telegram Users</div>
+                    <p style="font-size:13px;color:var(--dim);line-height:1.5;margin-bottom:12px">Every user who
+                        messages your bot is auto-registered here. The AI can send messages to any of these users
+                        autonomously when instructed. You can also dispatch a quick manual message.</p>
+                    <div id="tg-users-list">
+                        <div style="font-size:12px;color:var(--dim);padding:10px 0">No users yet. Users are
+                            auto-registered when they message the bot.</div>
                     </div>
                 </div>
             </div>
@@ -308,6 +318,7 @@
     <script src="js/core/state.js" defer></script>
     <script src="js/core/vfs.js" defer></script>
     <script src="js/core/webllm.js" defer></script>
+    <script src="js/core/memory.js" defer></script>
     <script src="js/core/ai.js" defer></script>
     <script src="js/core/telegram.js" defer></script>
     <script src="js/ui/app.js" defer></script>

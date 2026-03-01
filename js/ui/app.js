@@ -6,9 +6,10 @@ async function boot() {
     uiMod();
     bind();
     wllmInit();
+    if (typeof memInit === 'function') memInit(); // start autonomous memory compression
     setInterval(hlth, 1000);
     if (st.cfg.auto) tgTog();
-    lg('SYS', 'KREASYS Core Initialized. VFS Data securely segregated.');
+    lg('SYS', 'KREASYS Core Initialized. VFS Data securely segregated. Memory system active.');
     ckDb();
 }
 
@@ -68,35 +69,107 @@ function uiMod() {
     const p = $('#mod-list'); p.innerHTML = '';
     st.mods.forEach(m => {
         const d = document.createElement('div'); d.className = 'mod-row'; d.dataset.id = m.id;
-        const isC = m.p === 'custom' ? 'block' : 'none';
-        d.innerHTML = `<div class="mod-hdr"><input class="mn" value="${m.n}" placeholder="Alias (e.g. My Fast Groq)" style="flex:1;min-width:150px"><button class="btn okc" onclick="tstMod('${m.id}')" style="padding:6px 10px"><i data-lucide="radio"></i> Test</button><button class="btn primary" onclick="svMod('${m.id}')" style="padding:6px 10px"><i data-lucide="save"></i> Save</button><button class="btn err dtb" onclick="rmMod('${m.id}')" style="padding:6px 10px"><i data-lucide="trash-2"></i></button></div><div class="mod-cfg"><select class="mp" onchange="chgPrv(this,'${m.id}')"><option value="openrouter" ${m.p === 'openrouter' ? 'selected' : ''}>OpenRouter</option><option value="groq" ${m.p === 'groq' ? 'selected' : ''}>Groq</option><option value="nvidia" ${m.p === 'nvidia' ? 'selected' : ''}>NVIDIA</option><option value="custom" ${m.p === 'custom' ? 'selected' : ''}>Custom</option></select><select class="mt"><option value="text" ${(m.t || 'text') === 'text' ? 'selected' : ''}>Text</option><option value="multimodal" ${m.t === 'multimodal' ? 'selected' : ''}>Multimodal</option><option value="vision" ${m.t === 'vision' ? 'selected' : ''}>Vision</option><option value="image" ${m.t === 'image' ? 'selected' : ''}>ImageGen</option><option value="audio" ${m.t === 'audio' ? 'selected' : ''}>Audio</option><option value="video" ${m.t === 'video' ? 'selected' : ''}>Video</option></select><input class="mm" value="${m.m}" placeholder="Model ID (e.g. llama3-8b)"><input type="password" class="mk" value="${m.k}" placeholder="Bearer Token (API Key)"></div><input class="me" value="${m.e || ''}" placeholder="Custom Endpoint URL" style="display:${isC}">`;
+        const isC = (m.p === 'custom') ? 'block' : 'none';
+        const provOptions = [
+            ['openrouter', 'OpenRouter'],
+            ['groq', 'Groq'],
+            ['nvidia', 'NVIDIA NIM'],
+            ['openai', 'OpenAI'],
+            ['anthropic', 'Anthropic'],
+            ['huggingface', 'HuggingFace'],
+            ['ollama', 'Ollama (Local)'],
+            ['custom', 'Custom Endpoint']
+        ].map(([v, label]) => `<option value="${v}" ${m.p === v ? 'selected' : ''}>${label}</option>`).join('');
+
+        // For non-custom providers, show a soft hint with the endpoint URL
+        const endpointHint = (typeof PRV_HINTS !== 'undefined' && PRV_HINTS[m.p]) ? PRV_HINTS[m.p] : '';
+
+        d.innerHTML = `
+<div class="mod-hdr">
+  <input class="mn" value="${m.n}" placeholder="Alias (e.g. My Fast Groq)" style="flex:1;min-width:150px">
+  <button class="btn okc" onclick="tstMod('${m.id}')" style="padding:6px 10px"><i data-lucide="radio"></i> Test</button>
+  <button class="btn primary" onclick="svMod('${m.id}')" style="padding:6px 10px"><i data-lucide="save"></i> Save</button>
+  <button class="btn err dtb" onclick="rmMod('${m.id}')" style="padding:6px 10px"><i data-lucide="trash-2"></i></button>
+</div>
+<div class="mod-cfg">
+  <select class="mp" onchange="chgPrv(this,'${m.id}')">${provOptions}</select>
+  <select class="mt">
+    <option value="text"      ${(m.t || 'text') === 'text' ? 'selected' : ''}>Text</option>
+    <option value="multimodal" ${m.t === 'multimodal' ? 'selected' : ''}>Multimodal</option>
+    <option value="vision"    ${m.t === 'vision' ? 'selected' : ''}>Vision</option>
+    <option value="image"     ${m.t === 'image' ? 'selected' : ''}>ImageGen</option>
+    <option value="audio"     ${m.t === 'audio' ? 'selected' : ''}>Audio</option>
+    <option value="video"     ${m.t === 'video' ? 'selected' : ''}>Video</option>
+  </select>
+  <input class="mm" value="${m.m}" placeholder="Model ID (e.g. llama-3.1-8b-instant)">
+  <input type="password" class="mk" value="${m.k}" placeholder="API Key${m.p === 'ollama' ? ' (not required for local)' : ''}">
+</div>
+<div class="me-wrap">
+  <input class="me" value="${m.e || ''}" placeholder="${endpointHint}" style="display:${isC};font-size:12px;color:var(--dim)">
+  ${m.p !== 'custom' ? `<div class="me-hint" style="font-size:11px;color:var(--dim);padding:4px 0;opacity:0.7">${endpointHint}</div>` : ''}
+</div>`;
         p.appendChild(d);
     });
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
-function chgPrv(s, id) { const r = $(`.mod-row[data-id="${id}"]`); if (s.value === 'custom') $('.me', r).style.display = 'block'; else $('.me', r).style.display = 'none'; }
+
+function chgPrv(s, id) {
+    const r = $(`.mod-row[data-id="${id}"]`);
+    const meInput = $('.me', r);
+    const hint = (typeof PRV_HINTS !== 'undefined' && PRV_HINTS[s.value]) ? PRV_HINTS[s.value] : '';
+    if (s.value === 'custom') {
+        meInput.style.display = 'block';
+        meInput.placeholder = 'Enter your custom endpoint URL here';
+    } else {
+        meInput.style.display = 'none';
+    }
+    // Update the hint display
+    const hintEl = $('.me-hint', r);
+    if (hintEl) { hintEl.textContent = hint; hintEl.style.display = hint ? '' : 'none'; }
+    // Update key placeholder for Ollama
+    const mkInput = $('.mk', r);
+    if (mkInput) mkInput.placeholder = s.value === 'ollama' ? 'API Key (not required for local)' : 'API Key';
+}
+
 function addModUI() { st.mods.push({ id: genId(), n: '', p: 'openrouter', m: '', k: '', e: '', t: 'text' }); uiMod() }
+
 async function svMod(id) {
     const r = $(`.mod-row[data-id="${id}"]`); const m = st.mods.find(x => x.id === id);
     if (m) {
         m.n = $('.mn', r).value; m.p = $('.mp', r).value; m.t = $('.mt', r).value; m.m = $('.mm', r).value; m.k = $('.mk', r).value; m.e = $('.me', r).value;
         const b = $('.primary', r); b.innerHTML = '<i data-lucide="check"></i> Saved'; if (typeof lucide !== 'undefined') lucide.createIcons();
-        setTimeout(() => { b.innerHTML = '<i data-lucide="save"></i> Save' }, 1500);
+        setTimeout(() => { b.innerHTML = '<i data-lucide="save"></i> Save'; if (typeof lucide !== 'undefined') lucide.createIcons(); }, 1500);
         await svGlb();
     }
 }
+
 function rmMod(id) { if (st.mods.length > 1) { st.mods = st.mods.filter(m => m.id !== id); uiMod(); svGlb() } }
+
 async function tstMod(id) {
     const r = $(`.mod-row[data-id="${id}"]`);
-    const tm = { id, n: $('.mn', r).value, p: $('.mp', r).value, m: $('.mm', r).value, k: $('.mk', r).value, e: $('.me', r).value };
-    const b = $('.okc', r); b.innerHTML = '<i data-lucide="loader"></i> Ping'; if (typeof lucide !== 'undefined') lucide.createIcons();
+    // Read live values from the form (no save required before testing)
+    const tm = {
+        id,
+        n: $('.mn', r).value || 'Unnamed',
+        p: $('.mp', r).value,
+        m: $('.mm', r).value,
+        k: $('.mk', r).value,
+        e: $('.me', r).value
+    };
+    const b = $('.okc', r);
+    b.innerHTML = '<i data-lucide="loader"></i> Pinging...'; if (typeof lucide !== 'undefined') lucide.createIcons();
     try {
-        const res = await llm('Say EXACTLY "OK"', 'Respond OK', tm);
-        if (res.trim().includes('OK')) { b.innerHTML = '<i data-lucide="check"></i> PASS'; lg('SYS', `[${tm.n}] API Connection PASS.`) }
-        else { b.innerHTML = '<i data-lucide="alert-triangle"></i> WARN'; lg('SYS', `[${tm.n}] WARN: ${res}`) }
-    } catch (e) { b.innerHTML = '<i data-lucide="x"></i> FAIL'; lg('ERR', `[${tm.n}] FAIL: ${e.message}`) }
+        const res = await llm('You are a test assistant. Respond with exactly: OK', 'Respond OK', tm);
+        if (res.trim().toUpperCase().includes('OK')) {
+            b.innerHTML = '<i data-lucide="check"></i> PASS'; b.className = 'btn okc'; lg('SYS', `[${tm.n}] API test PASS.`);
+        } else {
+            b.innerHTML = '<i data-lucide="alert-triangle"></i> WARN'; b.className = 'btn'; lg('SYS', `[${tm.n}] WARN — Unexpected response: ${res.substring(0, 100)}`);
+        }
+    } catch (e) {
+        b.innerHTML = '<i data-lucide="x"></i> FAIL'; b.className = 'btn err'; lg('ERR', `[${tm.n}] FAIL: ${e.message}`);
+    }
     if (typeof lucide !== 'undefined') lucide.createIcons();
-    setTimeout(() => { b.innerHTML = '<i data-lucide="radio"></i> Test'; if (typeof lucide !== 'undefined') lucide.createIcons(); }, 2500);
+    setTimeout(() => { b.innerHTML = '<i data-lucide="radio"></i> Test'; b.className = 'btn okc'; if (typeof lucide !== 'undefined') lucide.createIcons(); }, 3000);
 }
 
 function ckDb() { localforage.length().then(c => $('#st-db').className = c > 0 ? 'dot ok' : 'dot err').catch(() => $('#st-db').className = 'dot err') }
