@@ -1,6 +1,4 @@
 <div align="center">
-  <img src="https://www.kreasioka.com/img/kreasioka-banner.jpg" alt="KREASYS Banner" width="100%" style="border-radius: 12px; margin-bottom: 20px;">
-  <br>
   <img src="https://www.kreasioka.com/img/logo.svg" alt="KREASYS Logo" width="120">
   <h1>KREASYS</h1>
   <p><strong>Autonomous Browser-Native IDE & Multi-Modal AI Ecosystem</strong></p>
